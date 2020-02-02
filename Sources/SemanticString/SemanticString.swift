@@ -1,7 +1,40 @@
 import Foundation
 
 public struct SemanticString {
+
+    private static var _currentLocale: Locale = .autoupdatingCurrent
+    private static let currentLocaleLock = ReadWriteLock()
+
+    public static let currentLocaleKey = "currentLocale"
+
+    public static var currentLocale: Locale {
+        currentLocaleLock.lockRead()
+        defer { currentLocaleLock.unlock() }
+        return _currentLocale
+    }
+
+    public static func setCurrentLocale(_ locale: Locale) {
+        currentLocaleLock.lockWrite()
+        let prevLocale = _currentLocale
+        _currentLocale = locale
+        currentLocaleLock.unlock()
+
+        guard prevLocale != locale else { return }
+
+        NotificationCenter.default.post(
+            name: .semanticStringCurrentLocaleDidChange,
+            object: nil,
+            userInfo: [currentLocaleKey: locale]
+        )
+    }
+
     public let components: [StringComponent]
+}
+
+extension SemanticString: CustomStringConvertible {
+    public var description: String {
+        getString()
+    }
 }
 
 extension SemanticString: ExpressibleByStringLiteral, ExpressibleByStringInterpolation {
@@ -111,7 +144,7 @@ extension SemanticString {
 }
 
 extension SemanticString {
-    public func getString(_ locale: Locale = Locale.current) -> String {
+    public func getString(_ locale: Locale = SemanticString.currentLocale) -> String {
         let strings = components.map { component in
             getString(component: component, locale: locale)
         }

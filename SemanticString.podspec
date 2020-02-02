@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name             = 'SemanticString'
-  s.version          = '0.21.0'
+  s.version          = '0.22.0'
   s.summary          = 'String abstraction for easy text localization and stylization'
   s.description      = <<-DESC
   SemanticString allows mark some text regions with desired styles, for example, "bold".

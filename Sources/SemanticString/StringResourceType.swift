@@ -27,16 +27,16 @@ extension StringResourceType {
     }
 
     private func getFromCacheOrFindBundle(for localeIdentifier: String, in resourceBundle: Bundle) -> Bundle? {
-            let result = LanguageBundleCache.shared.getBundle(for: localeIdentifier, in: resourceBundle)
-            switch result {
-            case .notExists: return nil
-            case let .exists(bundle): return bundle
-            case .missing:
-                let bundle = findBundle(for: localeIdentifier, in: resourceBundle)
-                LanguageBundleCache.shared.saveLanguageBundle(bundle, for: localeIdentifier, resourceBundle: resourceBundle)
-                return bundle
-            }
+        let result = LanguageBundleCache.shared.getBundle(for: localeIdentifier, in: resourceBundle)
+        switch result {
+        case .notExists: return nil
+        case let .exists(bundle): return bundle
+        case .missing:
+            let bundle = findBundle(for: localeIdentifier, in: resourceBundle)
+            LanguageBundleCache.shared.saveLanguageBundle(bundle, for: localeIdentifier, resourceBundle: resourceBundle)
+            return bundle
         }
+    }
 
     // https://developer.apple.com/library/archive/qa/qa1828/_index.html
     private func findBundle(for localeIdentifier: String, in resourceBundle: Bundle) -> Bundle? {
@@ -92,21 +92,21 @@ private final class LanguageBundleCache {
 
     static let shared = LanguageBundleCache()
 
-    private let queue = DispatchQueue(label: "BlowMindStyle.LanguageBundleCache.Queue", qos: .userInitiated, attributes: .concurrent)
     private var bundleCache: [BundleLocaleIdKey: StoredResult<Bundle>] = [:]
+    private let lock = ReadWriteLock()
 
     func getBundle(for localeIdentifier: String, in resourceBundle: Bundle) -> CacheResult<Bundle> {
         let key = BundleLocaleIdKey(localeIdentifier: localeIdentifier.uppercased(), resourceBundle: resourceBundle)
-        return queue.sync {
-            CacheResult(bundleCache[key])
-        }
+        lock.lockRead()
+        defer { lock.unlock() }
+        return CacheResult(bundleCache[key])
     }
 
     func saveLanguageBundle(_ bundle: Bundle?, for localeIdentifier: String, resourceBundle: Bundle) {
         let result = bundle.map(StoredResult.exists) ?? .notExists
         let key = BundleLocaleIdKey(localeIdentifier: localeIdentifier.uppercased(), resourceBundle: resourceBundle)
-        queue.async(flags: .barrier) {
-            self.bundleCache[key] = result
-        }
+        lock.lockWrite()
+        bundleCache[key] = result
+        lock.unlock()
     }
 }
