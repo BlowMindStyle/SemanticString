@@ -73,7 +73,7 @@ extension SemanticString {
         let strings = components.map { component in
             getAttributedString(
                 component: component,
-                locale: locale,
+                locale: locale ?? SemanticString.currentLocale,
                 commonAttributes: commonAttributes,
                 setAttributes: provider.setAttributes(for:attributes:surroundingStyles:))
         }

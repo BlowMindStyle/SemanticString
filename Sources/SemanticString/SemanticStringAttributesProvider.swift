@@ -7,9 +7,9 @@ public struct SemanticStringAttributesProvider: SemanticStringAttributesProvider
 
     private let _getAttributes: () -> TextAttributes
     private let _setAttributes: (SemanticString.TextStyle, inout TextAttributes, [SemanticString.TextStyle]) -> Void
-    public let locale: Locale
+    public let locale: Locale?
 
-    public init(locale: Locale,
+    public init(locale: Locale? = nil,
                 getAttributes: @escaping () -> TextAttributes,
                 setAttributes: @escaping SetAttributes) {
         self.locale = locale
@@ -17,7 +17,7 @@ public struct SemanticStringAttributesProvider: SemanticStringAttributesProvider
         _setAttributes = setAttributes
     }
 
-    public init(locale: Locale, getAttributes: @escaping (SemanticString.TextStyle?) -> TextAttributes) {
+    public init(locale: Locale? = nil, getAttributes: @escaping (SemanticString.TextStyle?) -> TextAttributes) {
         self.locale = locale
         _getAttributes = { getAttributes(nil) }
         _setAttributes = { textStyle, attributes, _ in
@@ -35,12 +35,21 @@ public struct SemanticStringAttributesProvider: SemanticStringAttributesProvider
         surroundingStyles: [SemanticString.TextStyle]) {
         _setAttributes(textStyle, &attributes, surroundingStyles)
     }
+}
 
-    public static var `default`: SemanticStringAttributesProvider {
-        SemanticStringAttributesProvider(
-            locale: Locale.current,
-            getAttributes: { TextAttributes() },
-            setAttributes: { _, _, _ in }
-        )
+extension SemanticStringAttributesProvider {
+    public init(
+        locale: Locale? = nil,
+        commonAttributes: TextAttributes,
+        styleAttributes: [SemanticString.TextStyle: TextAttributes]
+    ) {
+        self.locale = locale
+        _getAttributes = { commonAttributes }
+        _setAttributes = { style, attributes, _ in
+            guard let attributesForStyle = styleAttributes[style]
+                else { return }
+
+            attributes.merge(with: attributesForStyle)
+        }
     }
 }

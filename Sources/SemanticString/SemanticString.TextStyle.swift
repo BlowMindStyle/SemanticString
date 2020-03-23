@@ -1,10 +1,16 @@
 extension SemanticString {
     public struct TextStyle: Hashable, Equatable, RawRepresentable {
-        public var rawValue: String
+        public let rawValue: String
 
         public init(rawValue: String) {
             self.rawValue = rawValue
         }
+    }
+}
+
+extension SemanticString.TextStyle: ExpressibleByStringLiteral {
+    public init(stringLiteral value: String) {
+        self.rawValue = value
     }
 }
 
