@@ -1,10 +1,16 @@
 import Foundation
 
 extension SemanticString {
+    /**
+     Returns an uppercase version of the string.
+     */
     public func uppercased() -> SemanticString {
         mapText(transformString: { $0.uppercased() }, transformAttributedString: { $0.uppercased() })
     }
 
+    /**
+     Returns an lowercase version of the string.
+     */
     public func lowercased() -> SemanticString {
         mapText(transformString: { $0.lowercased() }, transformAttributedString: { $0.lowercased() })
     }

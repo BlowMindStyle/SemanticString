@@ -1,5 +1,43 @@
 import Foundation
 
+/**
+ String abstraction that includes information about structural semantics for text.
+ This information allows applying stylization to the text, forming a result of the `NSAttributedString` type.
+
+ For example we want to make "hello **world**!" text with highlighted word "world".
+
+ To create `NSAttributedString` from `SemanticString` we need instance of `SemanticStringAttributesProviderType`.
+ ```
+ let text = SemanticString("Hello \("world", styles: [.bold])!")
+
+ let provider = SemanticStringAttributesProvider(
+     commonAttributes: [.font: UIFont.systemFont(ofSize: UIFont.systemFontSize)],
+     styleAttributes: [
+         .bold: [.font: UIFont.boldSystemFont(ofSize: UIFont.systemFontSize)]
+     ]
+ )
+
+ let attributedText: NSAttributedString = text.getAttributedString(provider: provider)
+ ```
+
+ For applications that support changing language at runtime, `SemanticString` lets create locale agnostic strings.
+ Next example assumes that project contains `Localizable.strings` for English and Russian localization with `helloWorld` key
+ ```
+ let resource = StringResource(key: "helloWorld", tableName: "Localizable", bundle: .main)
+ let string = SemanticString(resource: resource)
+
+ print(string)
+ // printed: "Hello world!"
+
+ SemanticString.setCurrentLocale(Locale(identifier: "ru-RU"))
+
+ print(string)
+ // printed: "Привет мир!"
+ ```
+
+ - SeeAlso: `SemanticStringAttributesProviderType`
+ - SeeAlso: `setCurrentLocale(_:)`
+ */
 public struct SemanticString {
 
     private static var _currentLocale: Locale = .autoupdatingCurrent
@@ -7,12 +45,27 @@ public struct SemanticString {
 
     public static let currentLocaleKey = "currentLocale"
 
+    /**
+     Default locale that used for string localization.
+     */
     public static var currentLocale: Locale {
         currentLocaleLock.lockRead()
         defer { currentLocaleLock.unlock() }
         return _currentLocale
     }
 
+    /**
+     Set default locale.
+
+     After setting new locale `SemanticString` posts `.semanticStringCurrentLocaleDidChange` notification.
+     To observe it:
+     ```
+     let observation = NotificationCenter.default
+         .addObserver(forName: .semanticStringCurrentLocaleDidChange, object: nil, queue: nil) { notification in
+             let currentLocale = notification.userInfo[SemanticString.currentLocaleKey] as! Locale
+     }
+     ```
+     */
     public static func setCurrentLocale(_ locale: Locale) {
         currentLocaleLock.lockWrite()
         let prevLocale = _currentLocale
@@ -38,6 +91,9 @@ extension SemanticString: CustomStringConvertible {
 }
 
 extension SemanticString {
+    /**
+     Converts a `SemanticString` to `String` using a specified locale.
+     */
     public func getString(_ locale: Locale = SemanticString.currentLocale) -> String {
         let strings = components.map { component in
             getString(component: component, locale: locale)
@@ -65,6 +121,16 @@ extension SemanticString {
 }
 
 extension SemanticString {
+    /**
+     Converts a `SemanticString` to `NSAttributedString` using a specified provider.
+
+     - Parameters:
+        - provider: an object that provides text attributes for the whole text and specific text styles.
+
+     - Returns: formatted string.
+
+     - SeeAlso: `SemanticString.TextStyle`
+     */
     public func getAttributedString(provider: SemanticStringAttributesProviderType) -> NSAttributedString {
         let commonAttributes = provider.getAttributes()
 

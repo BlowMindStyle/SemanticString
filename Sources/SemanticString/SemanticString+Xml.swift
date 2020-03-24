@@ -1,6 +1,15 @@
 import Foundation
 
 extension SemanticString {
+    /**
+     creates `SemanticString` from xml-like string. Tags describe text styles.
+
+     ```
+     let xmlString = SemanticString(xml: "hello <bold>world</bold>!")
+     // similar to
+     let string = SemanticString("hello \(style: .bold, "world")!")
+     ```
+     */
     public init(xml string: SemanticString) {
         let content: Content = .dynamic { locale in
             SemanticString.parseXmlSemanticString(string, locale: locale)
@@ -111,10 +120,12 @@ extension SemanticString.FlatContent {
         let matches = tagRegex.matches(in: string, options: [], range: range)
         let tagMatches: [TagMatch] = matches.map { match in
             let nameRange = match.range(at: 1)
-            return TagMatch(name: nsString.substring(with: nameRange),
-                            range: match.range,
-                            isOpening: nameRange.length + 2 == match.range.length,
-                            componentIndex: componentIndex)
+            return TagMatch(
+                name: nsString.substring(with: nameRange),
+                range: match.range,
+                isOpening: nameRange.length + 2 == match.range.length,
+                componentIndex: componentIndex
+            )
         }
 
         return tagMatches
@@ -197,36 +208,38 @@ extension SemanticString.FlatStringComponent {
     private func splitAttributedString(
         _ attributedString: NSAttributedString,
         _ tagMatches: [TagMatch],
-        _ currentTextStyles: inout [SemanticString.TextStyle])
-        -> [SemanticString.StringComponent] {
+        _ currentTextStyles: inout [SemanticString.TextStyle]
+    ) -> [SemanticString.StringComponent] {
 
-            var components: [SemanticString.StringComponent] = []
+        var components: [SemanticString.StringComponent] = []
 
-            let nsString = attributedString.string as NSString
-            var beginIndex = 0
+        let nsString = attributedString.string as NSString
+        var beginIndex = 0
 
-            for match in tagMatches {
-                let textStyle = SemanticString.TextStyle(rawValue: match.name)
-                let substring = attributedString.attributedSubstring(
-                    from: NSRange(location: beginIndex, length: match.range.location - beginIndex))
-                if substring.length > 0 {
-                    components.append(.init(styles: currentTextStyles + self.styles, content: .attributed(substring)))
-                }
-
-                if match.isOpening {
-                    currentTextStyles.append(textStyle)
-                } else if let index = currentTextStyles.lastIndex(of: textStyle) {
-                    currentTextStyles.remove(at: index)
-                }
-
-                beginIndex = match.range.upperBound
+        for match in tagMatches {
+            let textStyle = SemanticString.TextStyle(rawValue: match.name)
+            let substring = attributedString.attributedSubstring(
+                from: NSRange(location: beginIndex, length: match.range.location - beginIndex))
+            if substring.length > 0 {
+                components.append(.init(styles: currentTextStyles + self.styles, content: .attributed(substring)))
             }
 
-            let lastSubstring = attributedString.attributedSubstring(from: NSRange(location: beginIndex, length: nsString.length - beginIndex))
-            if lastSubstring.length > 0 {
-                components.append(.init(styles: currentTextStyles + self.styles, content: .attributed(lastSubstring)))
+            if match.isOpening {
+                currentTextStyles.append(textStyle)
+            } else if let index = currentTextStyles.lastIndex(of: textStyle) {
+                currentTextStyles.remove(at: index)
             }
 
-            return components
+            beginIndex = match.range.upperBound
+        }
+
+        let lastSubstring = attributedString.attributedSubstring(from:
+            NSRange(location: beginIndex, length: nsString.length - beginIndex))
+
+        if lastSubstring.length > 0 {
+            components.append(.init(styles: currentTextStyles + self.styles, content: .attributed(lastSubstring)))
+        }
+
+        return components
     }
 }

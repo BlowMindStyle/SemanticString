@@ -1,7 +1,11 @@
 import Foundation
 import UIKit
 
+/**
+ Wrapper for `NSAttributedString` attributes with type-safe access to values.
+ */
 public struct TextAttributes {
+    /// attributes dictionary that can be used with `NSAttributedString`
     public var dictionary: [NSAttributedString.Key : Any]
 
     public init(dictionary: [NSAttributedString.Key : Any] = [:]) {
@@ -27,6 +31,9 @@ extension TextAttributes: ExpressibleByDictionaryLiteral {
 }
 
 extension TextAttributes {
+    /**
+     copies text attributes from `other` to `self`
+     */
     public mutating func merge(with other: TextAttributes) {
         for (key, value) in other.dictionary {
             dictionary[key] = value

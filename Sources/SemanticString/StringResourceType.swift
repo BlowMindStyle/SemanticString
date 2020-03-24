@@ -12,6 +12,9 @@ public protocol StringResourceType {
 }
 
 extension StringResourceType {
+    /**
+     returns localized string for specific locale.
+     */
     public func localize(with locale: Locale?) -> String {
         let localeIdentifier: String = {
             guard let locale = locale, locale.identifier != "" else {

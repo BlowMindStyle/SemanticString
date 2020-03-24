@@ -1,5 +1,8 @@
 import Foundation
 
+// see https://www.hackingwithswift.com/articles/163/how-to-use-custom-string-interpolation-in-swift
+// https://github.com/apple/swift-evolution/blob/master/proposals/0228-fix-expressiblebystringinterpolation.md
+
 extension SemanticString: ExpressibleByStringLiteral, ExpressibleByStringInterpolation {
     public struct StringInterpolation: StringInterpolationProtocol {
         var components: [SemanticString.StringComponent] = []
@@ -69,8 +72,14 @@ extension SemanticString: ExpressibleByStringLiteral, ExpressibleByStringInterpo
         components = string.components
     }
 
-    public init(string: String) {
-        components = [.init(styles: [], content: .plain(string))]
+    public init(_ string: SemanticString, styles: [TextStyle]) {
+        components = string.components.map { component in
+            StringComponent(styles: styles + component.styles, content: component.content)
+        }
+    }
+
+    public init(string: String, styles: [TextStyle] = []) {
+        components = [.init(styles: styles, content: .plain(string))]
     }
 
     public init(dynamic provider: @escaping (Locale) -> SemanticString, styles: [TextStyle] = []) {
