@@ -9,7 +9,7 @@ extension SemanticString {
     }
 
     /**
-     Returns an lowercase version of the string.
+     Returns a lowercase version of the string.
      */
     public func lowercased() -> SemanticString {
         mapText(transformString: { $0.lowercased() }, transformAttributedString: { $0.lowercased() })
